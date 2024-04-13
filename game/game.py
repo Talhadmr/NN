@@ -2,26 +2,30 @@ import time
 import asyncio
 import random
 
+""" for visualizing the game"""
+import pygame
+""" for visualizing the game"""
+
 class MyClock:
 	def __init__(self, ticks_per_second):
 		self.ticks_per_second = ticks_per_second
 		self.tick_duration = 1 / ticks_per_second
 		self.last_tick_time = time.time()
 
-	async def tick(self):
+	def tick(self):
 		current_time = time.time()
 		elapsed_time = current_time - self.last_tick_time
 		sleep_time = self.tick_duration - elapsed_time
 
 		if sleep_time > 0:
-			await asyncio.sleep(sleep_time)
+			time.sleep(sleep_time)
 		else:
 			self.last_tick_time = current_time
 
 		self.last_tick_time += self.tick_duration
 
 
-WIDTH, HEIGHT = 1400, 1000
+WIDTH, HEIGHT = 800, 600
 
 FPS = 60
 
@@ -31,6 +35,7 @@ BLACK = (0, 0, 0)
 PADDLE_WIDTH, PADDLE_HEIGHT = 6, 200
 BALL_RADIUS = 20
 
+#this is the score that the game will be played until
 WINNING_SCORE = 3
 
 
@@ -56,6 +61,22 @@ class Paddle:
 			elif self.y + self.VEL + self.height > HEIGHT:
 				self.y = HEIGHT - self.height
 
+	""" for visualizing the game"""
+	def draw(self, screen):
+		pygame.draw.rect(screen , (255, 255, 255), (self.x, self.y, self.width, self.height))
+		#pygame.draw.rect(screen, self.COLOR, (self.x, self.y, 30, self.height))
+	def vis_move_left(self):
+		if pygame.key.get_pressed()[pygame.K_UP]:
+			self.y -= 1
+		if pygame.key.get_pressed()[pygame.K_DOWN]:
+			self.y += 1
+	def vis_move_right(self):
+		if pygame.key.get_pressed()[pygame.K_w]:
+			self.y -= 1
+		if pygame.key.get_pressed()[pygame.K_s]:
+			self.y += 1
+	""" for visualizing the game"""
+
 	def reset(self):
 		self.x = self.original_x
 		self.y = self.original_y
@@ -76,6 +97,13 @@ class Ball:
 		self.x = round(self.x + self.x_vel, 3)
 		self.y = round(self.y + self.y_vel, 3)
 
+	""" for visualizing the game"""
+	def draw(self, screen):
+		pygame.draw.circle(screen, self.COLOR, (int(self.x), int(self.y)), self.radius)
+
+	
+	""" for visualizing the game"""
+
 	def reset(self):
 		self.x = self.original_x
 		self.y = self.original_y
@@ -84,6 +112,12 @@ class Ball:
 
 class PongGame:
 	def __init__(self):
+		self.debug()
+
+		""" for visualizing the game"""
+		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+		""" for visualizing the game"""
+		
 		self.p1_paddle =  Paddle(10, HEIGHT//2 - PADDLE_HEIGHT //
 							2, PADDLE_WIDTH, PADDLE_HEIGHT)
 		self.p2_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT //
@@ -100,6 +134,18 @@ class PongGame:
 				"player1Down":0,
 				"player2Up":0,
 				"player2Down":0}
+
+	""" for visualizing the game"""
+	def debug(self):
+		print("debug")
+	
+	def draw_score(self):
+		font = pygame.font.Font(None, 74)
+		text = font.render(f"{self.p2_score} : {self.p1_score}", True, WHITE)
+		text_rect = text.get_rect(center=(WIDTH/2, 30))
+		self.screen.blit(text, text_rect)
+
+	""" for visualizing the game"""
 
 	def handle_collision(self):
 		if self.ball.y + self.ball.radius >= HEIGHT:
@@ -150,12 +196,20 @@ class PongGame:
 
 	def wonControl(self):
 		if self.p1_score >= WINNING_SCORE:
-			print("KESIN BURASI1")
+			#print("KESIN BURASI1")
 			self.won = True
 		elif self.p2_score >= WINNING_SCORE:
-			print("KESIN BURASI2")
+			#print("KESIN BURASI2")
 			self.won = True
+
+		""" for visualizing the game"""
+		
+		#changed for a test
+		"""
 		if 	self.won == True:
 			self.ball.reset()
 			self.p1_paddle.reset()
 			self.p2_paddle.reset()
+			#print("KESIN BURASI2")
+		"""
+		""" for visualizing the game"""

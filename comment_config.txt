@@ -1,0 +1,81 @@
+[NEAT]
+fitness_criterion     = max     # bir sonraki jenerasyona uygunluk değeri en yüksek bireyin geçeceği anlamına gelir.
+fitness_threshold     = 400     # Algoritma, 400 veya daha yüksek bir ortalama uygunluk elde edildiğinde duracaktır.
+pop_size              = 50      # her bir neslinde 50 bireylik bir populasyon oluşturulacaktır.
+reset_on_extinction   = False   # türlerin tamamen yok olduğu (yani hiçbir bireyin kalmadığı) durumda populasyonun sıfırlanıp yeniden başlatılıp başlatılmayacağını kontrol eder.
+
+[DefaultStagnation]
+species_fitness_func = max  #  türlerin uygunluğunun hesaplanmasında her bir türün en yüksek uygunluğa sahip bireyinin performansının dikkate alınacağını belirtir.
+max_stagnation       = 20   #  bu durumda bir türün uygunluğu 20 ardışık nesil boyunca artmazsa, bu tür "stagnasyon" durumuna düşmüş olur.
+                                Bu durumda, NEAT algoritması türün durumunu değerlendirir ve uygun olması durumunda türü yeniden canlandırabilir 
+                                veya belirli bir eşik değeri altında kalan türlerin ortadan kaldırılmasını sağlayabilir.
+species_elitism      = 2    # her bir türdeki en iyi 2 birey bir sonraki jenerasyona aktarılır.
+
+[DefaultReproduction]
+elitism            = 2      # her bir türdeki en iyi 2 birey bir sonraki jenerasyona aktarılır.
+survival_threshold = 0.2    #  her bir türün en iyi %20'si bir sonraki jenerasyona aktarılır ve geri kalan %80'i elenir.
+
+[DefaultGenome]
+#  node activation options
+activation_default      = relu  # varsayılan aktivasyon fonksiyonu "relu" olarak belirlenmiştir.
+activation_mutate_rate  = 1.0   # her bir mutasyonun aktivasyon fonksiyonunu değiştirmesi beklenir.
+activation_options      = relu  # bireylerin sinir ağlarında varsayılan olarak "relu" aktivasyon fonksiyonunu kullanması beklenir.
+
+#  node aggregation options 
+aggregation_default     = sum    # bu kısmı anlamadım daha sonra çalışılacak
+aggregation_mutate_rate = 0.0    # bu kısmı anlamadım daha sonra çalışılacak
+aggregation_options     = sum    # bu kısmı anlamadım daha sonra çalışılacak
+
+#  node bias options # Düğüm önyargısı (bias), bir sinir ağındaki bir düğümün girdilerine eklenen sabit bir değerdir.
+bias_init_mean          = 3.0   # bu düğümlerin başlangıç önyargısı 3.0 olarak ayarlanır
+bias_init_stdev         = 1.0   # düğümlerin önyargısının başlangıç değerinin standart sapmasını belirtir.
+bias_max_value          = 30.0  # düğümlerin önyargısının maksimum değerini belirtir.
+bias_min_value          = -30.0 # düğümlerin önyargısının minimum değerini belirtir.
+bias_mutate_power       = 0.5   # düğümlerin önyargısının mutasyon gücünü belirtir.
+bias_mutate_rate        = 0.7   # düğümlerin önyargısının mutasyon oranını belirtir.
+bias_replace_rate       = 0.1   # düğümlerin önyargısının tamamen değiştirilme oranını belirtir.
+
+#  genome compatibility options
+compatibility_disjoint_coefficient = 1.0    # genotipler arasındaki ayrık bağlantıların uyumluluğunu hesaplamak için kullanılır.
+compatibility_weight_coefficient   = 0.5    # genetik çaprazlama işlemi sırasında ebeveynler arasındaki uyumluluğu değerlendirmek için kullanılır. 
+
+#  connection add/remove rates
+conn_add_prob           = 0.5   # Bu değer, yeni bir bağlantı eklenme olasılığını belirtir.
+conn_delete_prob        = 0.5   # bir bağlantının kaldırılma olasılığını belirtir
+    
+#  connection enable options    
+enabled_default         = True   # Bu parametre, yeni bir bağlantının varsayılan olarak etkin olup olmayacağını belirtir.
+enabled_mutate_rate     = 0.01   # her bir varolan bağlantının etkinleştirilme veya devre dışı bırakılma olasılığını belirtir.
+    
+feed_forward            = True   #  sinir ağının geri beslemeli olup olmadığını belirtir. 
+initial_connection      = full  _direct # her giriş düğümünün her çıkış düğümüne doğrudan bağlanması anlamına gelir. 
+    
+#  node add/remove rates    
+node_add_prob           = 0.2   # Bu parametre, her bir jenerasyonda bir düğümün eklenme olasılığını belirtir. Yani, her bir genotipte her bir jenerasyonda yeni bir düğümün eklenme olasılığıdır. Örneğin, node_add_prob = 0.2 ise, her bir yeni düğümün eklenme olasılığı %20'dir.
+node_delete_prob        = 0.2   # her bir jenerasyonda bir düğümün kaldırılma olasılığını belirtir.
+
+#  network parameters
+num_hidden              = 2 # sinir ağındaki gizli katmanların sayısını belirtir.
+num_inputs              = 3 # Bu, sinir ağının giriş düğümlerinin sayısını belirtir
+num_outputs             = 3 # Bu, sinir ağının çıkış düğümlerinin sayısını belirtir.
+
+#  node response options
+response_init_mean      = 1.0 #  düğümlerin başlangıç yanıt değerlerinin ortalama değerini belirtir.
+response_init_stdev     = 0.0 # düğümlerin başlangıç yanıt değerlerinin standart sapmasını belirtir. 
+response_max_value      = 30.0
+response_min_value      = -30.0
+response_mutate_power   = 0.0
+response_mutate_rate    = 0.0
+response_replace_rate   = 0.0
+
+#  connection weight options
+weight_init_mean        = 0.0 # ağlantı ağırlıklarının başlangıç değerlerinin ortalama değerini belirtir. 
+weight_init_stdev       = 1.0
+weight_max_value        = 30
+weight_min_value        = -30
+weight_mutate_power     = 0.5
+weight_mutate_rate      = 0.8
+weight_replace_rate     = 0.1
+
+[DefaultSpeciesSet]
+compatibility_threshold = 3.0 # iki birey arasındaki uyumluluk ölçüsü, bu eşiğe eşit veya daha küçükse, bu iki birey aynı türe aittir.
