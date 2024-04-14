@@ -5,7 +5,7 @@ import random
 """ for visualizing the game"""
 import pygame
 """ for visualizing the game"""
-
+lis = []
 class MyClock:
 	def __init__(self, ticks_per_second):
 		self.ticks_per_second = ticks_per_second
@@ -25,7 +25,7 @@ class MyClock:
 		self.last_tick_time += self.tick_duration
 
 
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1400, 1000
 
 FPS = 60
 
@@ -100,8 +100,6 @@ class Ball:
 	""" for visualizing the game"""
 	def draw(self, screen):
 		pygame.draw.circle(screen, self.COLOR, (int(self.x), int(self.y)), self.radius)
-
-	
 	""" for visualizing the game"""
 
 	def reset(self):
@@ -112,9 +110,10 @@ class Ball:
 
 class PongGame:
 	def __init__(self):
+		""" for visualizing the game"""
+		self.hit_score = 0
 		self.debug()
 
-		""" for visualizing the game"""
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		""" for visualizing the game"""
 		
@@ -136,6 +135,7 @@ class PongGame:
 				"player2Down":0}
 
 	""" for visualizing the game"""
+
 	def debug(self):
 		print("debug")
 	
@@ -143,6 +143,16 @@ class PongGame:
 		font = pygame.font.Font(None, 74)
 		text = font.render(f"{self.p2_score} : {self.p1_score}", True, WHITE)
 		text_rect = text.get_rect(center=(WIDTH/2, 30))
+		self.screen.blit(text, text_rect)
+
+	def increase_hit_score(self):
+		if(self.ball.x == 1375 or self.ball.x == 25):
+			self.hit_score += 1
+
+	def draw_hit_score(self):
+		font = pygame.font.Font(None, 74)
+		text = font.render(f"Hit Score: {self.hit_score}", True, WHITE)
+		text_rect = text.get_rect(center=(WIDTH/2, 70))
 		self.screen.blit(text, text_rect)
 
 	""" for visualizing the game"""
@@ -172,23 +182,30 @@ class PongGame:
 					y_vel = difference_in_y / reduction_factor
 					self.ball.y_vel = round(-1 * y_vel, 3)
 
-	def handle_paddle_movement(self):
-		if self.keys["player1Up"] == 1:
+	def handle_paddle_movement(self, keys):
+		if keys[pygame.K_w] == 1:
 			self.p1_paddle.move(up=1)
-		if self.keys["player1Down"] == 1:
+		if keys[pygame.K_s] == 1:
 			self.p1_paddle.move(up=0)
-		if self.keys["player2Up"] == 1:
+		if keys[pygame.K_UP] == 1:
 			self.p2_paddle.move(up=1)
-		if self.keys["player2Down"] == 1:
+		if keys[pygame.K_DOWN] == 1:
 			self.p2_paddle.move(up=0)
-
+ 
 	def scoreCheck(self):
 		if self.ball.x < 0:
-			self.p1_score += 1
+			""" for visualizing the game"""	
+			self.hit_score -= 1
+			#self.hit_score = 0
+			""" for visualizing the game"""
 			self.ball.reset()
 			self.p1_paddle.reset()
 			self.p2_paddle.reset()
 		elif self.ball.x > WIDTH:
+			""" for visualizing the game"""	
+			self.hit_score -= 1
+			#self.hit_score = 0
+			""" for visualizing the game"""
 			self.p2_score += 1
 			self.ball.reset()
 			self.p1_paddle.reset()
@@ -202,8 +219,7 @@ class PongGame:
 			#print("KESIN BURASI2")
 			self.won = True
 
-		""" for visualizing the game"""
-		
+		""" for visualizing the game"""	
 		#changed for a test
 		"""
 		if 	self.won == True:

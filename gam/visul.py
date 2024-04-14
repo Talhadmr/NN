@@ -4,7 +4,7 @@ pygame.init()
 
 FPS = 60
 
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1400, 1000
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

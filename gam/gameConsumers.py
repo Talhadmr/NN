@@ -21,11 +21,14 @@ def start_game(room_name):
 		Paddle.vis_move_left(game.p2_paddle)
 		Paddle.vis_move_right(game.p1_paddle)
 		game.draw_score()
+		game.increase_hit_score()
+		game.draw_hit_score()
 		pygame.display.update()
 		"""to here for visualizing the game"""
 
 		game.clock.tick()
-		game.handle_paddle_movement()
+		keys = pygame.key.get_pressed()
+		game.handle_paddle_movement(keys)
 		game.ball.move()
 		game.handle_collision()
 		game.scoreCheck()
@@ -36,5 +39,8 @@ def start_game(room_name):
 			pass
 		else:
 			game.frameCounter += 1
+
+def test_ai():
+	print("test ai")
 
 start_game("room")
