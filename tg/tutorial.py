@@ -87,6 +87,7 @@ class Pongame:
 def eval_genomes(genomes, config):
     width = 700
     height = 500
+    
     window = pygame.display.set_mode((width, height))
 
     for i, (genome_id1, genome1) in enumerate(genomes):

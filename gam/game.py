@@ -1,6 +1,11 @@
 import time
 import asyncio
 import random
+import neat 
+import os
+import pygame
+
+
 
 """ for visualizing the game"""
 import pygame
@@ -23,7 +28,6 @@ class MyClock:
 			self.last_tick_time = current_time
 
 		self.last_tick_time += self.tick_duration
-
 
 WIDTH, HEIGHT = 1400, 1000
 
@@ -91,7 +95,9 @@ class Ball:
 		self.y = self.original_y = y
 		self.radius = radius
 		self.x_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
-		self.y_vel = 0.0
+		self.y_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
+		
+			
 
 	def move(self):
 		self.x = round(self.x + self.x_vel, 3)
@@ -106,7 +112,7 @@ class Ball:
 		self.x = self.original_x
 		self.y = self.original_y
 		self.x_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
-		self.y_vel = 0
+		self.y_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
 
 class PongGame:
 	def __init__(self):
@@ -157,6 +163,48 @@ class PongGame:
 
 	""" for visualizing the game"""
 
+	"""for ai"""
+
+	def train_ai(self, genome1, genome2, config):
+		net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
+		net2 = neat.nn.FeedForwardNetwork.create(genome2, config)
+
+		output1 = net1.activate((self.p1_paddle.y, self.ball.y, abs(self.p1_paddle.x - self.ball.x)))
+		output2 = net2.activate((self.p2_paddle.y, self.ball.y, abs(self.p2_paddle.x - self.ball.x)))
+
+		while True:
+			"""from here""" 
+			self.screen.fill((0, 0, 0))
+			Paddle.draw(self.p1_paddle, self.screen)
+			Paddle.draw(self.p2_paddle, self.screen)
+			Ball.draw(self.ball, self.screen)
+			Paddle.vis_move_left(self.p2_paddle)
+			Paddle.vis_move_right(self.p1_paddle)
+			self.draw_score()
+			self.increase_hit_score()
+			self.draw_hit_score()
+			pygame.display.update()
+			"""to here for visualizing the game"""
+
+			#self.clock.tick()
+			keys = pygame.key.get_pressed()
+			#game.handle_paddle_movement(keys)
+			self.ball.move()
+			self.handle_collision()
+			self.scoreCheck()
+			self.wonControl()
+			
+			#print("game score: ", game.p1_score, game.p2_score)
+			if not self.won:
+				pass
+			else:
+				self.frameCounter += 1
+			if self.p1_score >= 5 or self.p2_score >= 5:
+				break
+
+
+	"""for ai"""
+	
 	def handle_collision(self):
 		if self.ball.y + self.ball.radius >= HEIGHT:
 			self.ball.y_vel = -1 * abs(self.ball.y_vel)
@@ -198,6 +246,7 @@ class PongGame:
 			self.hit_score -= 1
 			#self.hit_score = 0
 			""" for visualizing the game"""
+			self.p1_score += 1
 			self.ball.reset()
 			self.p1_paddle.reset()
 			self.p2_paddle.reset()
