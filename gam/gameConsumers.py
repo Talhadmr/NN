@@ -9,9 +9,15 @@ import random
 import neat 
 import os
 import pygame
+import pickle
 
-def start_game(room_name):
+
+def test_ai(config):
+	with open("best.pickle", "rb") as f:
+		genome = pickle.load(f)
+	
 	game = PongGame()
+	net = neat.nn.FeedForwardNetwork.create(genome, config)
 	while True:
 
 		"""from here""" 
@@ -21,21 +27,34 @@ def start_game(room_name):
 		Paddle.draw(game.p1_paddle, game.screen)
 		Paddle.draw(game.p2_paddle, game.screen)
 		Ball.draw(game.ball, game.screen)
-		Paddle.vis_move_left(game.p2_paddle)
-		Paddle.vis_move_right(game.p1_paddle)
 		game.draw_score()
 		game.increase_hit_score()
 		game.draw_hit_score()
-		pygame.display.update()
 		"""to here for visualizing the game"""
 
 		game.clock.tick()
 		keys = pygame.key.get_pressed()
-		game.handle_paddle_movement(keys)
+		#game.handle_paddle_movement(keys)
+		if keys[pygame.K_w] == 1:
+			game.p1_paddle.move(up=1)
+		if keys[pygame.K_s] == 1:
+			game.p1_paddle.move(up=0)
+		
+		output = net.activate((game.p2_paddle.y, game.ball.y, abs(game.p2_paddle.x - game.ball.x)))
+		decision = output.index(max(output))
+
+		if(decision == 0):
+			pass
+		elif(decision == 1):
+			game.p2_paddle.move(up=1)
+		else:
+			game.p2_paddle.move(up=0)
+
 		game.ball.move()
 		game.handle_collision()
 		game.scoreCheck()
 		game.wonControl()
+		pygame.display.update()
 		
 		#print("game score: ", game.p1_score, game.p2_score)
 		if not game.won:
@@ -43,19 +62,18 @@ def start_game(room_name):
 		else:
 			game.frameCounter += 1
 
-"""For execute the AI"""
 
 def eval_genomes(genomes, config):
-	
-	game = PongGame()
+	game = PongGame()	
 
 	for i, (genome_id1, genome1) in enumerate(genomes):
-		if i == len(genomes) - 1:
-			break
+		print(round(i/len(genomes) * 100), end=" ")
 		genome1.fitness = 0
-		for genome_id2, genome2 in genomes[i+1:]:
-			genome2.fitness = 0 if genome2.fitness is None else genome2.fitness
-			game.train_ai(genome1, genome2,config)
+		for genome_id2, genome2 in genomes[min(i+1, len(genomes) - 1):]:
+			genome2.fitness = 0 if genome2.fitness == None else genome2.fitness
+			force_quit = game.train_ai(genome1, genome2, config)
+			if force_quit:
+				quit()
 
 def run_neat(config):
 	p = neat.Population(config)
@@ -65,16 +83,19 @@ def run_neat(config):
 	p.add_reporter(neat.Checkpointer(1))
 	
 	winner = p.run(eval_genomes, 50)
+	with open("best.pickle", "wb") as f:
+		pickle.dump(winner, f)
 
 
 if __name__ == "__main__":
-	#start_game("room")
 	local_dir = os.path.dirname(__file__)
 	config_path = os.path.join(local_dir, "config.txt")
 	
-	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+	config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+					   neat.DefaultSpeciesSet, neat.DefaultStagnation,
+						 config_path)
 	
-	run_neat(config)
-	#test_ai()
+	#run_neat(config)
+	test_ai(config)
 """For execute the AI"""
  

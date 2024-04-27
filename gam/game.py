@@ -5,7 +5,7 @@ import neat
 import os
 import pygame
 
-
+b = 0
 
 """ for visualizing the game"""
 import pygame
@@ -69,16 +69,6 @@ class Paddle:
 	def draw(self, screen):
 		pygame.draw.rect(screen , (255, 255, 255), (self.x, self.y, self.width, self.height))
 		#pygame.draw.rect(screen, self.COLOR, (self.x, self.y, 30, self.height))
-	def vis_move_left(self):
-		if pygame.key.get_pressed()[pygame.K_UP]:
-			self.y -= 1
-		if pygame.key.get_pressed()[pygame.K_DOWN]:
-			self.y += 1
-	def vis_move_right(self):
-		if pygame.key.get_pressed()[pygame.K_w]:
-			self.y -= 1
-		if pygame.key.get_pressed()[pygame.K_s]:
-			self.y += 1
 	""" for visualizing the game"""
 
 	def reset(self):
@@ -118,6 +108,8 @@ class PongGame:
 	def __init__(self):
 		""" for visualizing the game"""
 		self.hit_score = 0
+		self.rigt_hit_score = 0
+		self.left_hit_score = 0
 		self.debug()
 
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -152,7 +144,11 @@ class PongGame:
 		self.screen.blit(text, text_rect)
 
 	def increase_hit_score(self):
-		if(self.ball.x == 1375 or self.ball.x == 25):
+		if(self.ball.x == 1375):
+			self.rigt_hit_score += 1
+			self.hit_score += 1
+		elif(self.ball.x == 25):
+			self.left_hit_score += 1
 			self.hit_score += 1
 
 	def draw_hit_score(self):
@@ -165,27 +161,26 @@ class PongGame:
 
 	"""for ai"""
 
+
 	def train_ai(self, genome1, genome2, config):
+
+		start_time = time.time()
 		net1 = neat.nn.FeedForwardNetwork.create(genome1, config)
 		net2 = neat.nn.FeedForwardNetwork.create(genome2, config)
-
-		output1 = net1.activate((self.p1_paddle.y, self.ball.y, abs(self.p1_paddle.x - self.ball.x)))
-		output2 = net2.activate((self.p2_paddle.y, self.ball.y, abs(self.p2_paddle.x - self.ball.x)))
-
+		self.genome1 = genome1
+		self.genome2 = genome2
 		while True:
 			"""from here""" 
 			self.screen.fill((0, 0, 0))
 			Paddle.draw(self.p1_paddle, self.screen)
 			Paddle.draw(self.p2_paddle, self.screen)
 			Ball.draw(self.ball, self.screen)
-			Paddle.vis_move_left(self.p2_paddle)
-			Paddle.vis_move_right(self.p1_paddle)
 			self.draw_score()
 			self.increase_hit_score()
 			self.draw_hit_score()
 			pygame.display.update()
 			"""to here for visualizing the game"""
-
+			self.move_ai_paddles(net1, net2)
 			#self.clock.tick()
 			keys = pygame.key.get_pressed()
 			#game.handle_paddle_movement(keys)
@@ -199,10 +194,43 @@ class PongGame:
 				pass
 			else:
 				self.frameCounter += 1
-			if self.p1_score >= 5 or self.p2_score >= 5:
+			
+			duration = time.time() - start_time
+	
+			if self.p1_score >= 1 or self.p2_score >= 1 or self.hit_score > 10:
+				self.calculate_fitness(genome1, genome2, duration)
 				break
+		return False
+		
+	def move_ai_paddles(self, net1, net2):
+		"""
+		Determine where to move the left and the right paddle based on the two 
+		neural networks that control them. 
+        """
 
+		output1 = net1.activate((self.p1_paddle.y, abs(self.p1_paddle.x - self.ball.x), self.ball.y))
+		decision1 = output1.index(max(output1))
 
+		output2 = net2.activate((self.p2_paddle.y, abs(self.p2_paddle.x - self.ball.x), self.ball.y))
+		decision2 = output2.index(max(output2))
+
+		if(decision1 == 0):
+			self.genome1.fitness -= 0.1
+		elif(decision1 == 1):
+			self.p1_paddle.move(up=1)
+		else:
+			self.p1_paddle.move(up=0)
+		
+		if(decision2 == 0):
+			self.genome2.fitness -= 0.1
+		elif(decision2 == 1):
+			self.p2_paddle.move(up=1)
+		else:
+			self.p2_paddle.move(up=0)
+
+	def calculate_fitness(self, genome1, genome2,duration):
+		genome1.fitness += self.left_hit_score + duration
+		genome2.fitness += self.rigt_hit_score + duration
 	"""for ai"""
 	
 	def handle_collision(self):
@@ -244,7 +272,8 @@ class PongGame:
 		if self.ball.x < 0:
 			""" for visualizing the game"""	
 			self.hit_score -= 1
-			#self.hit_score = 0
+			self.left_hit_score -= 1
+			self.hit_score = 0
 			""" for visualizing the game"""
 			self.p1_score += 1
 			self.ball.reset()
@@ -252,8 +281,9 @@ class PongGame:
 			self.p2_paddle.reset()
 		elif self.ball.x > WIDTH:
 			""" for visualizing the game"""	
+			self.rigt_hit_score -= 1
 			self.hit_score -= 1
-			#self.hit_score = 0
+			self.hit_score = 0
 			""" for visualizing the game"""
 			self.p2_score += 1
 			self.ball.reset()
