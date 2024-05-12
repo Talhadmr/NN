@@ -6,7 +6,7 @@ from game import Paddle, Ball
 import time
 import asyncio
 import random
-import neat 
+import neat
 import os
 import pygame
 import pickle
@@ -15,12 +15,18 @@ import pickle
 def test_ai(config):
 	with open("best.pickle", "rb") as f:
 		genome = pickle.load(f)
-	
+
 	game = PongGame()
 	net = neat.nn.FeedForwardNetwork.create(genome, config)
+	buffer = [0,0,0]
+	i = 0
 	while True:
-
-		"""from here""" 
+		if i % 60 == 0:
+			buffer[0], buffer[1], buffer[2] = game.p2_paddle.y, game.ball.y, abs(game.p2_paddle.x - game.ball.x)
+		i += 1
+		if i == 60:
+			i = 0
+		"""from here"""
 		vsl.quit_game()
 		vsl.press_key()
 		game.screen.fill((0, 0, 0))
@@ -39,8 +45,7 @@ def test_ai(config):
 			game.p1_paddle.move(up=1)
 		if keys[pygame.K_s] == 1:
 			game.p1_paddle.move(up=0)
-		
-		output = net.activate((game.p2_paddle.y, game.ball.y, abs(game.p2_paddle.x - game.ball.x)))
+		output = net.activate((buffer[0], buffer[1], buffer[2]))
 		decision = output.index(max(output))
 
 		if(decision == 0):
@@ -55,7 +60,7 @@ def test_ai(config):
 		game.scoreCheck()
 		game.wonControl()
 		pygame.display.update()
-		
+
 		#print("game score: ", game.p1_score, game.p2_score)
 		if not game.won:
 			pass
@@ -64,13 +69,13 @@ def test_ai(config):
 
 
 def eval_genomes(genomes, config):
-	game = PongGame()	
-
 	for i, (genome_id1, genome1) in enumerate(genomes):
-		print(round(i/len(genomes) * 100), end=" ")
+		#print(round(i/len(genomes) * 100), end=" ")
 		genome1.fitness = 0
 		for genome_id2, genome2 in genomes[min(i+1, len(genomes) - 1):]:
 			genome2.fitness = 0 if genome2.fitness == None else genome2.fitness
+			game = PongGame()
+			print("Playing game with genome1: ", genome_id1, " and genome2: ", genome_id2)
 			force_quit = game.train_ai(genome1, genome2, config)
 			if force_quit:
 				quit()
@@ -81,7 +86,7 @@ def run_neat(config):
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
 	p.add_reporter(neat.Checkpointer(1))
-	
+
 	winner = p.run(eval_genomes, 50)
 	with open("best.pickle", "wb") as f:
 		pickle.dump(winner, f)
@@ -90,12 +95,11 @@ def run_neat(config):
 if __name__ == "__main__":
 	local_dir = os.path.dirname(__file__)
 	config_path = os.path.join(local_dir, "config.txt")
-	
+
 	config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
 					   neat.DefaultSpeciesSet, neat.DefaultStagnation,
 						 config_path)
-	
-	#run_neat(config)
-	test_ai(config)
+
+	run_neat(config)
+	#test_ai(config)
 """For execute the AI"""
- 

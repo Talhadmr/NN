@@ -1,7 +1,7 @@
 import time
 import asyncio
 import random
-import neat 
+import neat
 import os
 import pygame
 
@@ -59,11 +59,14 @@ class Paddle:
 				self.y -= self.VEL
 			elif self.y - self.VEL < 0:
 				self.y = 0
+				return True
 		else:
 			if self.y + self.VEL + self.height <= HEIGHT:
 				self.y += self.VEL
 			elif self.y + self.VEL + self.height > HEIGHT:
 				self.y = HEIGHT - self.height
+				return True
+		return False
 
 	""" for visualizing the game"""
 	def draw(self, screen):
@@ -85,9 +88,8 @@ class Ball:
 		self.y = self.original_y = y
 		self.radius = radius
 		self.x_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
-		self.y_vel = list([-1, 1])[random.randint(0,1)] * self.MAX_VEL
-		
-			
+		self.y_vel = (random.random() * 2) - 1
+
 
 	def move(self):
 		self.x = round(self.x + self.x_vel, 3)
@@ -110,11 +112,11 @@ class PongGame:
 		self.hit_score = 0
 		self.rigt_hit_score = 0
 		self.left_hit_score = 0
-		self.debug()
+		#self.debug()
 
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		""" for visualizing the game"""
-		
+
 		self.p1_paddle =  Paddle(10, HEIGHT//2 - PADDLE_HEIGHT //
 							2, PADDLE_WIDTH, PADDLE_HEIGHT)
 		self.p2_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT //
@@ -136,7 +138,7 @@ class PongGame:
 
 	def debug(self):
 		print("debug")
-	
+
 	def draw_score(self):
 		font = pygame.font.Font(None, 74)
 		text = font.render(f"{self.p2_score} : {self.p1_score}", True, WHITE)
@@ -169,8 +171,14 @@ class PongGame:
 		net2 = neat.nn.FeedForwardNetwork.create(genome2, config)
 		self.genome1 = genome1
 		self.genome2 = genome2
+		buffer = [[0,0,0],[0,0,0]]
+		
 		while True:
-			"""from here""" 
+			
+			buffer[0][0], buffer[0][1], buffer[0][2] = self.p1_paddle.y, self.ball.y, abs(self.p1_paddle.x - self.ball.x)
+			buffer[0][0], buffer[0][1], buffer[0][2] = self.p2_paddle.y, self.ball.y, abs(self.p2_paddle.x - self.ball.x)
+			
+			"""from here"""
 			self.screen.fill((0, 0, 0))
 			Paddle.draw(self.p1_paddle, self.screen)
 			Paddle.draw(self.p2_paddle, self.screen)
@@ -180,59 +188,66 @@ class PongGame:
 			self.draw_hit_score()
 			pygame.display.update()
 			"""to here for visualizing the game"""
-			self.move_ai_paddles(net1, net2)
+			self.move_ai_paddles(net1, net2, buffer)
 			#self.clock.tick()
-			keys = pygame.key.get_pressed()
+			#keys = pygame.key.get_pressed()
 			#game.handle_paddle_movement(keys)
 			self.ball.move()
 			self.handle_collision()
 			self.scoreCheck()
 			self.wonControl()
-			
+
 			#print("game score: ", game.p1_score, game.p2_score)
 			if not self.won:
 				pass
 			else:
 				self.frameCounter += 1
-			
+
 			duration = time.time() - start_time
-	
-			if self.p1_score >= 1 or self.p2_score >= 1 or self.hit_score > 10:
+
+			if self.p1_score >= 1 or self.p2_score >= 1 or self.hit_score > 50:
 				self.calculate_fitness(genome1, genome2, duration)
 				break
 		return False
-		
-	def move_ai_paddles(self, net1, net2):
+
+	def move_ai_paddles(self, net1, net2, buffer):
 		"""
-		Determine where to move the left and the right paddle based on the two 
-		neural networks that control them. 
+		Determine where to move the left and the right paddle based on the two
+		neural networks that control them.
         """
 
-		output1 = net1.activate((self.p1_paddle.y, abs(self.p1_paddle.x - self.ball.x), self.ball.y))
+		output1 = net1.activate((buffer[0][0], buffer[0][1], buffer[0][2]))
 		decision1 = output1.index(max(output1))
 
-		output2 = net2.activate((self.p2_paddle.y, abs(self.p2_paddle.x - self.ball.x), self.ball.y))
+		output2 = net2.activate((buffer[1][0], buffer[1][1], buffer[1][2]))
 		decision2 = output2.index(max(output2))
 
+		valid = False
 		if(decision1 == 0):
 			self.genome1.fitness -= 0.1
 		elif(decision1 == 1):
-			self.p1_paddle.move(up=1)
+			valid = self.p1_paddle.move(up=1)
 		else:
-			self.p1_paddle.move(up=0)
-		
+			valid = self.p1_paddle.move(up=0)
+		if valid:
+			self.genome1.fitness -= 1
+
+		valid = False
 		if(decision2 == 0):
 			self.genome2.fitness -= 0.1
 		elif(decision2 == 1):
-			self.p2_paddle.move(up=1)
+			valid = self.p2_paddle.move(up=1)
 		else:
-			self.p2_paddle.move(up=0)
+			valid = self.p2_paddle.move(up=0)
+		if valid:
+			self.genome2.fitness -= 1
+		# If the movement makes the paddle go off the screen punish the AI
 
-	def calculate_fitness(self, genome1, genome2,duration):
+	def calculate_fitness(self, genome1, genome2, duration):
 		genome1.fitness += self.left_hit_score + duration
 		genome2.fitness += self.rigt_hit_score + duration
 	"""for ai"""
-	
+
 	def handle_collision(self):
 		if self.ball.y + self.ball.radius >= HEIGHT:
 			self.ball.y_vel = -1 * abs(self.ball.y_vel)
@@ -267,10 +282,10 @@ class PongGame:
 			self.p2_paddle.move(up=1)
 		if keys[pygame.K_DOWN] == 1:
 			self.p2_paddle.move(up=0)
- 
+
 	def scoreCheck(self):
 		if self.ball.x < 0:
-			""" for visualizing the game"""	
+			""" for visualizing the game"""
 			self.hit_score -= 1
 			self.left_hit_score -= 1
 			self.hit_score = 0
@@ -280,7 +295,7 @@ class PongGame:
 			self.p1_paddle.reset()
 			self.p2_paddle.reset()
 		elif self.ball.x > WIDTH:
-			""" for visualizing the game"""	
+			""" for visualizing the game"""
 			self.rigt_hit_score -= 1
 			self.hit_score -= 1
 			self.hit_score = 0
@@ -298,7 +313,7 @@ class PongGame:
 			#print("KESIN BURASI2")
 			self.won = True
 
-		""" for visualizing the game"""	
+		""" for visualizing the game"""
 		#changed for a test
 		"""
 		if 	self.won == True:
